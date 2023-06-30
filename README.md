@@ -94,3 +94,24 @@ Navigate to the service URL and post a Twoge blog
 ![ezgif com-video-to-gif (1)](https://github.com/perryb3693/twoge_k8s/assets/129805541/1d662e3a-2769-4a59-a524-5ac1125b5432)
 
 ***Step 3: Configure Database***
+Next, redploy a database within the Kubernetes Cluster to use within the Twoge Application instead and use ConfigMap and Secrets YAML configurations to pass database configurations to the application. 
+
+Remove the environment variable from the Dockerfile and build/push to DockerHub using a new tag (2.0.0).
+```
+FROM python:alpine
+
+RUN apk update && \
+    apk add --no-cache build-base libffi-dev openssl-dev
+COPY . /app
+WORKDIR /app
+RUN pip install -r requirements.txt
+EXPOSE 80
+CMD python app.py
+```
+```
+docker build -t perryb3693/twoge:2.0.0 .
+docker push perryb3693/twoge:2.0.0
+```
+
+
+
