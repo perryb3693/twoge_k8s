@@ -96,7 +96,7 @@ Navigate to the service URL and post a Twoge blog
 ***Step 3: Configure Database***
 Next, redploy a database within the Kubernetes Cluster to use within the Twoge Application instead and use ConfigMap and Secrets YAML configurations to pass database configurations to the application. 
 
-Remove the environment variable from the Dockerfile and build/push to DockerHub using a new tag (2.0.0).
+Update the docker image with removing the environment variable and push to DockerHub using a new tag (2.0.0).
 ```
 FROM python:alpine
 
@@ -113,5 +113,16 @@ docker build -t perryb3693/twoge:2.0.0 .
 docker push perryb3693/twoge:2.0.0
 ```
 
+configure secrets yaml file
 
+configure configmap file 
 
+configure postgres deployment yaml
+
+configure postgres service yaml
+
+edit twoge application deployment yaml file to include database environment variable and use new image
+
+***Step 4: Namespace and Quotas***
+
+***Step 5: Probes***
