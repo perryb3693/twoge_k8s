@@ -124,5 +124,58 @@ configure postgres service yaml
 edit twoge application deployment yaml file to include database environment variable and use new image
 
 ***Step 4: Namespace and Quotas***
+Create a new namespace and define a resource quota to apply to the kubernetes cluster
+
+touch twoge-namespace.yml
+
+Apply the namespace yaml file to create the new namespace then save the namespace configuration for all subsequent kubectl commands
+minikube kubectl -- apply -f twoge-namespace.yml
+minikube kubectl -- config set-context --current --namespace=twoge-development
+minikube kubectl -- config view --minify | grep namespace:
+
+Create a ResourceQuota and apply it to the new namespace
+
+vim quota-mem-cpu.yml
+
+minikube kubectl -- apply -f quota-pod.yml
+
+
+
+View detailed information about the ResourceQuota
+minikube kubectl -- get resourcequota pod-quota --namespace=twoge-development --output=yaml
+
+kubectl get deployment twoge-dep --namespace=twoge-development --output=yaml
+
+
+The output shows that even though the number of replicas specified within the Deployment is three, only two Pods were created due to the emplaced quota.
+status:
+```
+  availableReplicas: 2
+  conditions:
+  - lastTransitionTime: "2023-07-01T20:34:13Z"
+    lastUpdateTime: "2023-07-01T20:34:13Z"
+    message: Deployment does not have minimum availability.
+    reason: MinimumReplicasUnavailable
+    status: "False"
+    type: Available
+  - lastTransitionTime: "2023-07-01T20:34:14Z"
+    lastUpdateTime: "2023-07-01T20:34:14Z"
+    message: 'pods "twoge-dep-9d4465966-5qttw" is forbidden: exceeded quota: pod-quota,
+      requested: pods=1, used: pods=3, limited: pods=3'
+    reason: FailedCreate
+    status: "True"
+    type: ReplicaFailure
+  - lastTransitionTime: "2023-07-01T20:34:13Z"
+    lastUpdateTime: "2023-07-01T20:34:32Z"
+    message: ReplicaSet "twoge-dep-9d4465966" is progressing.
+    reason: ReplicaSetUpdated
+    status: "True"
+    type: Progressing
+  observedGeneration: 1
+  readyReplicas: 2
+  replicas: 2
+  unavailableReplicas: 1
+  updatedReplicas: 2
+```
 
 ***Step 5: Probes***
