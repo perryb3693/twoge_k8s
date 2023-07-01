@@ -140,13 +140,15 @@ vim quota-mem-cpu.yml
 minikube kubectl -- apply -f quota-pod.yml
 
 
-
+Redeploy all pods under the new namespace
+```
+minikube kubectl -- apply -f .
+```
 View detailed information about the ResourceQuota
+```
 minikube kubectl -- get resourcequota pod-quota --namespace=twoge-development --output=yaml
-
-kubectl get deployment twoge-dep --namespace=twoge-development --output=yaml
-
-
+minikube kubectl -- get deployment twoge-dep --namespace=twoge-development --output=yaml
+---
 The output shows that even though the number of replicas specified within the Deployment is three, only two Pods were created due to the emplaced quota.
 status:
 ```
@@ -179,3 +181,14 @@ status:
 ```
 
 ***Step 5: Probes***
+Implement a liveness probe within the YAML files of each of the deployments. The kublet will run the first liveness probe 15 seconds after the container starts. It will attempt to connect to the twoge-service container on port 80 and the postgres container on port 5432. If the liveness prove  fails, the container is restarted by the kublet. 
+```
+livenessProbe:
+    tcpSocket:
+        port: 80
+    initialDelaySeconds: 5
+    periodSeconds: 5
+```
+
+
+
