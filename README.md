@@ -140,15 +140,35 @@ vim quota-mem-cpu.yml
 minikube kubectl -- apply -f quota-pod.yml
 
 
-Redeploy all pods under the new namespace
+
+Redeploy all pods under the new namespace and check current namespace configurations
 ```
 minikube kubectl -- apply -f .
+minikube kubectl -- describe namespaces twoge-development
 ```
+```
+Name:         twoge-development
+Labels:       kubernetes.io/metadata.name=twoge-development
+              name=twoge-development
+Annotations:  <none>
+Status:       Active
+
+Resource Quotas
+  Name:     pod-quota
+  Resource  Used  Hard
+  --------  ---   ---
+  pods      3     3
+
+No LimitRange resource.
+```
+
+
+
 View detailed information about the ResourceQuota
 ```
 minikube kubectl -- get resourcequota pod-quota --namespace=twoge-development --output=yaml
 minikube kubectl -- get deployment twoge-dep --namespace=twoge-development --output=yaml
----
+```
 The output shows that even though the number of replicas specified within the Deployment is three, only two Pods were created due to the emplaced quota.
 status:
 ```
@@ -180,8 +200,10 @@ status:
   updatedReplicas: 2
 ```
 
+
 ***Step 5: Probes***
-Implement a liveness probe within the YAML files of each of the deployments. The kublet will run the first liveness probe 15 seconds after the container starts. It will attempt to connect to the twoge-service container on port 80 and the postgres container on port 5432. If the liveness prove  fails, the container is restarted by the kublet. 
+Implement a liveness probe within the YAML files of each of the deployments. The kublet will run the first liveness probe 15 seconds after the container starts. It will attempt to connect to the twoge-service container on port 80 and the postgres container on port 5432. If the liveness prove  fails, the container is restarted by the kublet.
+
 ```
 livenessProbe:
     tcpSocket:
@@ -189,6 +211,38 @@ livenessProbe:
     initialDelaySeconds: 5
     periodSeconds: 5
 ```
+kubectl describe -pod-
 
+***Deploy on AWS EKS***
+Migrate the deployments to EKS. First, create an EKS cluster using the command line interface:
+```
+eksctl create cluster --region ca-central-1 --node-type t2.small --nodes 1 --nodes-min 1 --nodes-max 1 --name twoge-cluster
+```
+Navigate to the directory storing the previously configured YAML files and apply the configuration to build the deployments and services within the EKS cluster
+```
+kubectl apply -f .
+```
+Use `kubectl get all` to verify the successful deployment of all nodes 
+Output:
+```
+NAME                            READY   STATUS    RESTARTS        AGE
+pod/postgres-5996fb64f5-vw2hc   1/1     Running   0               4m36s
+pod/twoge-dep-8f55967f-k57b6    1/1     Running   1 (4m14s ago)   4m35s
+pod/twoge-dep-8f55967f-lhz8t    1/1     Running   2 (4m12s ago)   4m36s
 
+NAME                       TYPE           CLUSTER-IP      EXTERNAL-IP                                                                 PORT(S)        AGE
+service/kubernetes         ClusterIP      10.100.0.1      <none>                                                                      443/TCP        86m
+service/postgres-service   ClusterIP      10.100.64.101   <none>                                                                      5432/TCP       4m36s
+service/twoge-service      LoadBalancer   10.100.46.81    a6cd4f493af494e0c8b32fa0d576c163-897229701.ca-central-1.elb.amazonaws.com   80:30333/TCP   4m36s
+
+NAME                        READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/postgres    1/1     1            1           4m36s
+deployment.apps/twoge-dep   2/3     2            2           4m36s
+
+NAME                                  DESIRED   CURRENT   READY   AGE
+replicaset.apps/postgres-5996fb64f5   1         1         1       4m36s
+replicaset.apps/twoge-dep-8f55967f    3         2         2       4m36s
+```
+Navigate to the specified external-ip for the twoge-service and post a blog on Twoge!
+<img width="910" alt="image" src="https://github.com/perryb3693/twoge_k8s/assets/129805541/fe23d2af-1eb9-41ed-9d9d-29fc8646b635">
 
