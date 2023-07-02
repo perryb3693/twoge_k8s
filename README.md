@@ -114,20 +114,135 @@ docker push perryb3693/twoge:2.0.0
 ```
 
 configure secrets yaml file
+vim twoge_secrets.yml
+```
+apiVersion: v1
+kind: Secret
+metadata:
+  name: twoge-secrets
+type: Opaque
+stringData:
+  postgres-uri: postgresql://postgres:password@postgres-service/postgres
+  postgres-username: postgres
+  postgres-password: password
+
+#URI Format - <database_engine>://<username>:<password>@<host>:<port>/<database_name>
+```
 
 configure configmap file 
+vim postgres-configmap.yml
+```
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-configmap
+data:
+  postgres-database: postgres
+```
 
 configure postgres deployment yaml
+vim postgres-dep.yml
+```
+#Postgres Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres                                  #Sets the deployment's name
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres                            
+        image: postgres                         #uses the latest Postgres image
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: postgres-configmap
+              key: postgres-database
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: twoge-secrets
+              key: postgres-username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: twoge-secrets
+              key: postgres-password
+```
 
 configure postgres service yaml
+vim postgres-service.yml
+```
+# MySQL Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  labels:
+    app: postgres
+spec:
+  selector:
+    app: postgres
+  type: ClusterIP
+  ports:
+    - port: 5432                #Sets port to run the postgres application
+```
 
 edit twoge application deployment yaml file to include database environment variable and use new image
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: twoge-dep       #name of the deployment. this name will become the basis for the replicasets and pods which are created later
+spec:
+  selector:               #defines how the created replicaset finds which Pods to manage
+    matchLabels:
+      app: twoge-web
+  replicas: 3                   #the deployment creates a replicaset that creates the specified number of replicated pods in the background
+  template: 
+    metadata:
+      labels:                #attach labels to replicaset pods for organization
+        app: twoge-web       
+    spec:
+      containers:                           #indicates that the pods will run one container with the specified name and image from dockerhub 
+        - name: twoge-webserver           #name of the replicaset containers
+          image:  perryb3693/twoge:2.0.0 #image used by the replicaset contaienrs
+          ports:
+            - containerPort: 80
+          livenessProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          env:
+            - name: SQLALCHEMY_DATABASE_URI
+              valueFrom:
+                secretKeyRef:
+                  name: twoge-secrets
+                  key: postgres-uri
+```
 
 ***Step 4: Namespace and Quotas***
 Create a new namespace and define a resource quota to apply to the kubernetes cluster
 
-touch twoge-namespace.yml
-
+vim twoge-namespace.yml
+```
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: twoge-development
+  labels:
+    name: twoge-development
+```
 Apply the namespace yaml file to create the new namespace then save the namespace configuration for all subsequent kubectl commands
 minikube kubectl -- apply -f twoge-namespace.yml
 minikube kubectl -- config set-context --current --namespace=twoge-development
@@ -135,11 +250,18 @@ minikube kubectl -- config view --minify | grep namespace:
 
 Create a ResourceQuota and apply it to the new namespace
 
-vim quota-mem-cpu.yml
+vim quota-pod.yml
+```
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: pod-quota
+spec:
+  hard:
+    pods: "3"
+```
 
 minikube kubectl -- apply -f quota-pod.yml
-
-
 
 Redeploy all pods under the new namespace and check current namespace configurations
 ```
