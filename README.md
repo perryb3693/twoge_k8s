@@ -3,15 +3,19 @@
 The purpose of this repository is to gain experience using Kubernetes by deploying the Twoge application through Kubernetes. The Twoge application will first be deployed on a local Kubernetes cluster through Minikube, then deployed utilizing AWS Elastic Kubernetes Service (EKS).
 Source files for the Twoge application can be found at https://github.com/chandradeoarya/twoge/tree/k8s
 
+Architecture Diagram:
+
+
 
 ***Step 1: Create a Docker Image of the Twoge Application***
-The first step in deploying the Twoge application through Kubernetes is to first dockerize the application by defining the application's environment and its dependencies within a Dockerfile to build a docker image later.
+
+The first step in deploying the Twoge application through Kubernetes is to first dockerize the application by defining and building a Dockerfile to run the application within a container
 
 Clone the application's repository onto the local system then change over to the new directory and create the Dockerfile. 
-
 ```
 git clone https://github.com/chandradeoarya/twoge.git
 cd twoge
+touch Dockerfile
 ```
 Build a Postgres database using Amazon RDS for initial testing of the Twoge Application. Configure attached security group to allow inbound traffic over port 5432 and 22. Take note of the database server's endpoint URL and the specified user/password/database information for use later within the environment variable. 
 
@@ -22,23 +26,24 @@ Create the Dockerfile using database information:
 vim Dockerfile
 ```
 ```
-FROM python:alpine
+FROM python:alpine                                                                                                                               #using pyython alpine as the base image 
 
-ENV SQLALCHEMY_DATABASE_URI=postgresql://postgres:password@twoge-database-1.ctfbo8wbotzl.ca-central-1.rds.amazonaws.com/postgres
-RUN apk update && \
-    apk add --no-cache build-base libffi-dev openssl-dev
-COPY . /app
+ENV SQLALCHEMY_DATABASE_URI=postgresql://postgres:password@twoge-database-1.ctfbo8wbotzl.ca-central-1.rds.amazonaws.com/postgres                 #environment variable contains sensitive information and will be removed after initial testing
+RUN apk update && \                                                                                                                              #updates the indexes from all configured package repos
+    apk add --no-cache build-base libffi-dev openssl-dev                                                                                         #adds the requsted packages to the image and installs/upgrades them 
+COPY . /app                                                                                                                                      #copy the working directory on the local machine to the /app directory
 WORKDIR /app
-RUN pip install -r requirements.txt
-EXPOSE 80
-CMD python app.py
+RUN pip install -r requirements.txt                                                                                                              #installs the dependencies listed within the requirements.txt file
+EXPOSE 80                                                                                                                                        #specify the open port
+CMD python app.py                                                                                                                                #command to run the python application
 ```
 Build the image then push to DockerHub for later use for containers built within the Kubernetes Cluster. 
 ```
 docker build -t perryb3693/twoge .
 docker push perryb3693/twoge
 ```
-***Deploy Twoge on Minikube***
+***Step 2: Deploy Twoge on Minikube***
+
 Next, write the Kubernetes Deployment and Service YAML configuration files using the created Docker Image to deploy the Twoge application and expose it within the Minikube cluster. 
 ```
 vim twoge_dep.yml
@@ -94,6 +99,7 @@ Navigate to the service URL and post a Twoge blog
 ![ezgif com-video-to-gif (1)](https://github.com/perryb3693/twoge_k8s/assets/129805541/1d662e3a-2769-4a59-a524-5ac1125b5432)
 
 ***Step 3: Configure Database***
+
 Next, redploy a database within the Kubernetes Cluster to use within the Twoge Application instead and use ConfigMap and Secrets YAML configurations to pass database configurations to the application. 
 
 Update the docker image with removing the environment variable and push to DockerHub using a new tag (2.0.0).
@@ -232,6 +238,7 @@ spec:
 ```
 
 ***Step 4: Namespace and Quotas***
+
 Create a new namespace and define a resource quota to apply to the kubernetes cluster
 
 vim twoge-namespace.yml
@@ -324,6 +331,7 @@ status:
 
 
 ***Step 5: Probes***
+
 Implement a liveness probe within the YAML files of each of the deployments. The kublet will run the first liveness probe 15 seconds after the container starts. It will attempt to connect to the twoge-service container on port 80 and the postgres container on port 5432. If the liveness prove  fails, the container is restarted by the kublet.
 
 ```
@@ -335,7 +343,8 @@ livenessProbe:
 ```
 kubectl describe -pod-
 
-***Deploy on AWS EKS***
+***Step 6: Deploy on AWS EKS***
+
 Migrate the deployments to EKS. First, create an EKS cluster using the command line interface:
 ```
 eksctl create cluster --region ca-central-1 --node-type t2.small --nodes 1 --nodes-min 1 --nodes-max 1 --name twoge-cluster
