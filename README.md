@@ -49,6 +49,8 @@ Next, write the Kubernetes Deployment and Service YAML configuration files using
 vim twoge_dep.yml
 ```
 ```
+#a deployment provides declarative updates for Pods and ReplicaSets. You describe a desired state in deployment, and the deployment controller changes the actual state in the desired state at a controlled rate. You can define Deployments to create new ReplicaSets, or to remove existing Deployments and adopt all their resources with new Deployments
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -91,8 +93,8 @@ spec:
 ```
 ```
 minikube start
-minikube kubectl -- apply -f .
-minikube service twoge-service --url
+minikube kubectl -- apply -f .            #apply the config files found within the present working directory
+minikube service twoge-service --url      #outputs the url of the specified service
 ```
 Navigate to the service URL and post a Twoge blog
 
