@@ -251,8 +251,9 @@ spec:
 ***Step 4: Namespace and Quotas***
 
 Create a new namespace and define a resource quota to apply to the kubernetes cluster
-
+```
 vim twoge-namespace.yml
+```
 ```
 apiVersion: v1
 kind: Namespace
@@ -262,13 +263,15 @@ metadata:
     name: twoge-development
 ```
 Apply the namespace yaml file to create the new namespace then save the namespace configuration for all subsequent kubectl commands
+```
 minikube kubectl -- apply -f twoge-namespace.yml
 minikube kubectl -- config set-context --current --namespace=twoge-development
 minikube kubectl -- config view --minify | grep namespace:
-
+```
 Create a ResourceQuota and apply it to the new namespace
-
+```
 vim quota-pod.yml
+```
 ```
 apiVersion: v1
 kind: ResourceQuota
@@ -278,14 +281,16 @@ spec:
   hard:
     pods: "3"
 ```
-
+```
 minikube kubectl -- apply -f quota-pod.yml
+```
 
 Redeploy all pods under the new namespace and check current namespace configurations
 ```
 minikube kubectl -- apply -f .
 minikube kubectl -- describe namespaces twoge-development
 ```
+Output:
 ```
 Name:         twoge-development
 Labels:       kubernetes.io/metadata.name=twoge-development
@@ -302,9 +307,7 @@ Resource Quotas
 No LimitRange resource.
 ```
 
-
-
-View detailed information about the ResourceQuota
+View detailed information about the ResourceQuota:
 ```
 minikube kubectl -- get resourcequota pod-quota --namespace=twoge-development --output=yaml
 minikube kubectl -- get deployment twoge-dep --namespace=twoge-development --output=yaml
@@ -340,10 +343,10 @@ status:
   updatedReplicas: 2
 ```
 
-
 ***Step 5: Probes***
 
-Implement a liveness probe within the YAML files of each of the deployments. The kublet will run the first liveness probe 15 seconds after the container starts. It will attempt to connect to the twoge-service container on port 80 and the postgres container on port 5432. If the liveness prove  fails, the container is restarted by the kublet.
+Implement a liveness probe within the YAML file of the deployment. The kublet will run the first liveness probe 15 seconds after the container starts. 
+It will attempt to connect to the twoge-service container on port 80 and the postgres container on port 5432. If the liveness prove  fails, the container is restarted by the kublet.
 
 ```
 livenessProbe:
@@ -352,11 +355,13 @@ livenessProbe:
     initialDelaySeconds: 5
     periodSeconds: 5
 ```
+```
 kubectl describe -pod-
+```
 
 ***Step 6: Deploy on AWS EKS***
 
-Migrate the deployments to EKS. First, create an EKS cluster using the command line interface:
+Migrate the deployments to EKS. Create an EKS cluster using the command line interface:
 ```
 eksctl create cluster --region ca-central-1 --node-type t2.small --nodes 1 --nodes-min 1 --nodes-max 1 --name twoge-cluster
 ```
@@ -365,6 +370,7 @@ Navigate to the directory storing the previously configured YAML files and apply
 kubectl apply -f .
 ```
 Use `kubectl get all` to verify the successful deployment of all nodes 
+
 Output:
 ```
 NAME                            READY   STATUS    RESTARTS        AGE
