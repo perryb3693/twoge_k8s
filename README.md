@@ -56,18 +56,18 @@ metadata:
 spec:
   selector:                                                 #defines how the created replicaset finds which Pods to manage
     matchLabels:
-      app: twoge-web
+      app: twoge-web                                        #specify what pods to apply deployment to
   replicas: 1                                               #the deployment creates a replicaset that creates the specified number of replicated pods in the background
   template: 
     metadata:
-      labels:                                               #attach labels to replicaset pods for organization
+      labels:                                               #attach labels to replicaset pods for organization 
         app: twoge-web       
     spec:
       containers:                                           #indicates that the pods will run one container with the specified name and image from dockerhub 
         - name: twoge-webserver                             #name of the replicaset containers
           image:  perryb3693/twoge                          #image used by the replicaset contaienrs
           ports:
-            - containerPort: 80
+            - containerPort: 80                             #opens the specified port on the container to allow traffic
 ```
 ```
 vim twoge_service.yml
