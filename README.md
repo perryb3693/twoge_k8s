@@ -42,6 +42,7 @@ Build the image then push to DockerHub for later use for containers built within
 docker build -t perryb3693/twoge .
 docker push perryb3693/twoge
 ```
+
 ***Step 2: Deploy Twoge on Minikube***
 
 Next, write the Kubernetes Deployment and Service YAML configuration files using the created Docker Image to deploy the Twoge application and expose it to network traffic within the Minikube cluster. 
@@ -49,7 +50,8 @@ Next, write the Kubernetes Deployment and Service YAML configuration files using
 vim twoge_dep.yml
 ```
 ```
-#a deployment provides declarative updates for Pods and ReplicaSets. You describe a desired state in deployment, and the deployment controller changes the actual state in the desired state at a controlled rate. You can define Deployments to create new ReplicaSets, or to remove existing Deployments and adopt all their resources with new Deployments
+#A deployment provides declarative updates for Pods and ReplicaSets. You describe a desired state in deployment, and the deployment controller changes the actual state in the desired state at a controlled rate.
+#You can define Deployments to create new ReplicaSets, or to remove existing Deployments and adopt all their resources with new Deployments
 
 apiVersion: apps/v1
 kind: Deployment
@@ -75,7 +77,8 @@ spec:
 vim twoge_service.yml
 ```
 ```
-#a serverice is a method of exposing a network application that is running as one or more Pods in your cluster. You use a Service to make a set of Pods available on the network so that clients can interact with it. 
+#a serverice is a method of exposing a network application that is running as one or more Pods in your cluster.
+#You use a Service to make a set of Pods available on the network so that clients can interact with it. 
 
 apiVersion: v1
 kind: Service
@@ -102,7 +105,7 @@ Navigate to the service URL and post a Twoge blog
 
 ***Step 3: Configure Database***
 
-Next, redploy a database within the Kubernetes Cluster to use within the Twoge Application instead and use ConfigMap and Secrets YAML configurations to pass database configurations to the application. 
+Next, redploy a database within the Kubernetes Cluster to use within the Twoge Application instead of AWS RDS, and use ConfigMap and Secrets YAML configurations to pass database configurations to the application. 
 
 Update the docker image with removing the environment variable and push to DockerHub using a new tag (2.0.0).
 ```
@@ -121,8 +124,10 @@ docker build -t perryb3693/twoge:2.0.0 .
 docker push perryb3693/twoge:2.0.0
 ```
 
-configure secrets yaml file
+Configure the Secrets YAML file with the sensitive database information
+```
 vim twoge_secrets.yml
+```
 ```
 apiVersion: v1
 kind: Secret
@@ -137,8 +142,10 @@ stringData:
 #URI Format - <database_engine>://<username>:<password>@<host>:<port>/<database_name>
 ```
 
-configure configmap file 
+Configure a configmap YAML file for nonsensitive database information
+```
 vim postgres-configmap.yml
+```
 ```
 apiVersion: v1
 kind: ConfigMap
@@ -148,14 +155,15 @@ data:
   postgres-database: postgres
 ```
 
-configure postgres deployment yaml
+Configure the Postgres deployment YAML configuration 
+```
 vim postgres-dep.yml
 ```
-#Postgres Deployment
+```
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: postgres                                  #Sets the deployment's name
+  name: postgres                                      #Sets the deployment's name
 spec:
   replicas: 1
   selector:
@@ -168,7 +176,7 @@ spec:
     spec:
       containers:
       - name: postgres                            
-        image: postgres                         #uses the latest Postgres image
+        image: postgres                             #uses the latest Postgres image
         env:
         - name: POSTGRES_DB
           valueFrom:
@@ -187,10 +195,11 @@ spec:
               key: postgres-password
 ```
 
-configure postgres service yaml
+Configure Postgres Service YAML file
+```
 vim postgres-service.yml
 ```
-# MySQL Service
+```
 apiVersion: v1
 kind: Service
 metadata:
@@ -202,28 +211,28 @@ spec:
     app: postgres
   type: ClusterIP
   ports:
-    - port: 5432                #Sets port to run the postgres application
+    - port: 5432                            #Sets port to run the postgres application
 ```
 
-edit twoge application deployment yaml file to include database environment variable and use new image
+Edit the Twoge application deployment YAML file to include the specified database environment variables and update the docker image
 ```
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: twoge-dep       #name of the deployment. this name will become the basis for the replicasets and pods which are created later
+  name: twoge-dep                           #name of the deployment. this name will become the basis for the replicasets and pods which are created later
 spec:
-  selector:               #defines how the created replicaset finds which Pods to manage
+  selector:                                 #defines how the created replicaset finds which Pods to manage
     matchLabels:
       app: twoge-web
-  replicas: 3                   #the deployment creates a replicaset that creates the specified number of replicated pods in the background
+  replicas: 3                               #the deployment creates a replicaset that creates the specified number of replicated pods in the background
   template: 
     metadata:
-      labels:                #attach labels to replicaset pods for organization
+      labels:                               #attach labels to replicaset pods for organization
         app: twoge-web       
     spec:
       containers:                           #indicates that the pods will run one container with the specified name and image from dockerhub 
-        - name: twoge-webserver           #name of the replicaset containers
-          image:  perryb3693/twoge:2.0.0 #image used by the replicaset contaienrs
+        - name: twoge-webserver             #name of the replicaset containers
+          image:  perryb3693/twoge:2.0.0    #image used by the replicaset contaienrs
           ports:
             - containerPort: 80
           livenessProbe:
