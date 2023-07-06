@@ -345,7 +345,7 @@ status:
 
 ***Step 5: Probes***
 
-Implement a liveness probe within the YAML file of the deployment. The kublet will run the first liveness probe 15 seconds after the container starts. 
+Implement a liveness probe within the YAML file of the deployment. The kublet will run the first liveness probe 5 seconds after the container starts. 
 It will attempt to connect to the twoge-service container on port 80 and the postgres container on port 5432. If the liveness prove  fails, the container is restarted by the kublet.
 
 ```
