@@ -44,7 +44,7 @@ docker push perryb3693/twoge
 ```
 ***Step 2: Deploy Twoge on Minikube***
 
-Next, write the Kubernetes Deployment and Service YAML configuration files using the created Docker Image to deploy the Twoge application and expose it within the Minikube cluster. 
+Next, write the Kubernetes Deployment and Service YAML configuration files using the created Docker Image to deploy the Twoge application and expose it to network traffic within the Minikube cluster. 
 ```
 vim twoge_dep.yml
 ```
@@ -52,20 +52,20 @@ vim twoge_dep.yml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: twoge-dep       #name of the deployment. this name will become the basis for the replicasets and pods which are created later
+  name: twoge-dep                                           #name of the deployment. this name will become the basis for the replicasets and pods which are created later
 spec:
-  selector:               #defines how the created replicaset finds which Pods to manage
+  selector:                                                 #defines how the created replicaset finds which Pods to manage
     matchLabels:
       app: twoge-web
-  replicas: 1                   #the deployment creates a replicaset that creates the specified number of replicated pods in the background
+  replicas: 1                                               #the deployment creates a replicaset that creates the specified number of replicated pods in the background
   template: 
     metadata:
-      labels:                #attach labels to replicaset pods for organization
+      labels:                                               #attach labels to replicaset pods for organization
         app: twoge-web       
     spec:
-      containers:                           #indicates that the pods will run one container with the specified name and image from dockerhub 
-        - name: twoge-webserver           #name of the replicaset containers
-          image:  perryb3693/twoge #image used by the replicaset contaienrs
+      containers:                                           #indicates that the pods will run one container with the specified name and image from dockerhub 
+        - name: twoge-webserver                             #name of the replicaset containers
+          image:  perryb3693/twoge                          #image used by the replicaset contaienrs
           ports:
             - containerPort: 80
 ```
