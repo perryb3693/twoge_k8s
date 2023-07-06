@@ -5,6 +5,7 @@ Source files for the Twoge application can be found at https://github.com/chandr
 
 Architecture Diagram:
 
+![image](https://github.com/perryb3693/twoge_k8s/assets/129805541/175349af-2d31-4fee-9490-63f76d17c499)
 
 
 ***Step 1: Create a Docker Image of the Twoge Application***
@@ -209,7 +210,7 @@ metadata:
 spec:
   selector:
     app: postgres
-  type: ClusterIP
+  type: ClusterIP                           #assigns a cluster internal IP where the service is only reachable from within the cluster
   ports:
     - port: 5432                            #Sets port to run the postgres application
 ```
