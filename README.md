@@ -1,6 +1,6 @@
 # twoge_k8s
 
-The purpose of this repository is to gain experience using Kubernetes by deploying the Twoge application through Kubernetes. The Twoge application will first be deployed on a local Kubernetes cluster through Minikube, then deployed utilizing AWS Elastic Kubernetes Service (EKS).
+The purpose of this project is to gain experience using Kubernetes by deploying the Twoge application through Kubernetes. The Twoge application will first be deployed on a local Kubernetes cluster through Minikube, then deployed utilizing AWS Elastic Kubernetes Service (EKS).
 Source files for the Twoge application can be found at https://github.com/chandradeoarya/twoge/tree/k8s
 
 Architecture Diagram:
